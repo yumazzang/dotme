@@ -1105,7 +1105,7 @@ randBtn.addEventListener('click', function() {
 
 // generate
 document.getElementById('gen-btn').addEventListener('click', startGenerate);
-async function startGenerate() {
+  let uploadedDataUrl = null;
 
 
 async function startGenerate() {
@@ -1139,7 +1139,25 @@ async function startGenerate() {
     }
     propsGrid.appendChild(box);
   }
-
+animateLoadingText();
+  if (uploadedDataUrl) {
+    try {
+      const response = await fetch('/api/transform', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: uploadedDataUrl })
+      });
+      const data = await response.json();
+      if (data.result) {
+        const pixelUrl = Array.isArray(data.result) ? data.result[0] : data.result;
+        document.getElementById('view-front').innerHTML = `<img src="${pixelUrl}" class="view-img">`;
+        document.getElementById('view-side').innerHTML = `<img src="${pixelUrl}" class="view-img" style="transform:scaleX(-1);opacity:0.85;">`;
+        document.getElementById('view-back').innerHTML = `<img src="${pixelUrl}" class="view-img" style="filter:brightness(0.6);opacity:0.75;">`;
+      }
+    } catch(err) { console.error(err); }
+  }
+  showScreen('sheet');
+  return;
   showScreen('loading');
   animateLoadingText();
 
