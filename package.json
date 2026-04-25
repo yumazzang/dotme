@@ -1,0 +1,7 @@
+{
+  "name": "dotme",
+  "version": "1.0.0",
+  "dependencies": {
+    "replicate": "^0.29.1"
+  }
+}
