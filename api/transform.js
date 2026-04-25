@@ -12,13 +12,16 @@ module.exports = async function handler(req, res) {
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
     const output = await replicate.run(
-      "adirik/stylize-anything:latest",
+      "retro-diffusion/rd-plus",
       {
         input: {
           image: image,
-          prompt: "pixel art, 16bit style, clean pixel art, game character sprite, full body, white background",
-          negative_prompt: "blurry, low quality, 3d render, photorealistic",
+          prompt: "pixel art character, full body, 16bit style, white background",
+          style: "character",
+          width: 256,
+          height: 256,
           strength: 0.75,
+          num_images: 1,
         }
       }
     );
