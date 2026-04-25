@@ -1,5 +1,3 @@
-const Replicate = require("replicate");
-
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -9,22 +7,31 @@ module.exports = async function handler(req, res) {
     const { image } = req.body;
     if (!image) return res.status(400).json({ error: "No image provided" });
 
-    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+    const imageBuffer = Buffer.from(base64Data, "base64");
 
-    const output = await replicate.run(
-      "cjwbw/pixel-art-style:c5b9f96bfba4a673cf04cbab2e98e59a12e82dd8dc27e6b09bb6426b95e1d8c1",
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/nerijs/pixel-art-xl",
       {
-        input: {
-          image: image,
-          prompt: "pixel art, 16bit style, game character sprite, full body, white background",
-          negative_prompt: "blurry, low quality, 3d render, photorealistic",
-          num_inference_steps: 20,
-          strength: 0.75,
-        }
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
+          "Content-Type": "application/octet-stream",
+        },
+        body: imageBuffer,
       }
     );
 
-    return res.status(200).json({ result: output });
+    if (!response.ok) {
+      const err = await response.text();
+      return res.status(500).json({ error: err });
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const resultBase64 = Buffer.from(arrayBuffer).toString("base64");
+    const resultUrl = `data:image/png;base64,${resultBase64}`;
+
+    return res.status(200).json({ result: resultUrl });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
