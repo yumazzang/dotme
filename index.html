@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DOTME.io — Pixel Character Sheet Maker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Outfit:wght@300;400;600&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --pink: #FF6B9D;
+  --mint: #7FDBDA;
+  --yellow: #FFE66D;
+  --lav: #C9B8FF;
+  --dark: #0D0D1A;
+  --card: #13132A;
+  --card2: #1A1A35;
+  --border: #ffffff12;
+  --dot: 'DotGothic16', monospace;
+  --body: 'Outfit', sans-serif;
+}
+
+html, body {
+  background: var(--dark);
+  color: white;
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* pixel grid bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(127,219,218,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(127,219,218,0.025) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; }
+
+/* ── HEADER ── */
+.header {
+  background: linear-gradient(135deg, #FF6B9D18, #C9B8FF18);
+  border-bottom: 1.5px solid var(--pink);
+  padding: 18px 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: var(--dot);
+  font-size: 20px;
+  color: var(--pink);
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 #FF6B9D33;
+}
+.logo span { color: var(--mint); }
+
+.hbadge {
+  background: var(--pink);
+  color: white;
+  font-family: var(--dot);
+  font-size: 9px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ── STEPS ── */
+.steps {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.step-num {
+  width: 22px;
+  height: 22px;
+  background: var(--card);
+  border: 1px solid #ffffff22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--dot);
+  font-size: 9px;
+  color: #ffffff44;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.step.done .step-num { background: #7FDBDA22; border-color: var(--mint); color: var(--mint); }
+.step.active .step-num { background: #FF6B9D22; border-color: var(--pink); color: var(--pink); }
+
+.step-label {
+  font-family: var(--dot);
+  font-size: 8px;
+  color: #ffffff22;
+  transition: color 0.3s;
+}
+.step.active .step-label { color: var(--pink); }
+.step.done .step-label { color: var(--mint); }
+
+.step-line {
+  flex: 1;
+  height: 1px;
+  background: #ffffff10;
+  margin: 0 4px;
+  transition: background 0.3s;
+}
+.step-line.done { background: var(--mint)55; }
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--mint)22, transparent);
+  margin: 0 20px;
+}
+
+/* ── SECTION ── */
+.section { padding: 18px 20px; }
+
+.stitle {
+  font-family: var(--dot);
+  font-size: 10px;
+  color: var(--mint);
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stitle::before { content: '▶'; color: var(--pink); font-size: 7px; }
+
+/* ── UPLOAD ── */
+.upload-zone {
+  border: 2px dashed var(--lav);
+  background: #C9B8FF08;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragging {
+  border-color: var(--pink);
+  background: #FF6B9D0A;
+}
+.upload-zone input { display: none; }
+
+.upload-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--pink);
+  margin: 0 auto 10px;
+  display: none;
+  image-rendering: pixelated;
+}
+.upload-preview.visible { display: block; }
+
+.upload-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+.upload-text { font-family: var(--dot); font-size: 11px; color: var(--lav); line-height: 1.8; }
+.upload-sub { font-size: 10px; color: #ffffff33; margin-top: 5px; font-family: var(--body); }
+
+/* ── STYLE GRID ── */
+.style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.style-card {
+  background: var(--card);
+  border: 2px solid transparent;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.style-card:hover { border-color: var(--lav)88; }
+.style-card.active { border-color: var(--pink); background: #FF6B9D0F; }
+
+.style-preview {
+  width: 100%;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  background: #ffffff06;
+  margin-bottom: 7px;
+}
+.style-name { font-family: var(--dot); font-size: 9px; color: white; display: block; margin-bottom: 1px; }
+.style-desc { font-size: 9px; color: #ffffff44; }
+.style-card.active .style-name { color: var(--pink); }
+
+.check-mark {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 14px; height: 14px;
+  background: var(--pink);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+.style-card.active .check-mark { display: flex; }
+
+/* ── POSE GRID ── */
+.pose-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.pose-card {
+  background: var(--card);
+  border: 2px solid transparent;
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pose-card.active { border-color: var(--mint); }
+.pose-icon { font-size: 26px; display: block; margin-bottom: 4px; }
+.pose-label { font-family: var(--dot); font-size: 8px; color: #ffffff55; }
+.pose-card.active .pose-label { color: var(--mint); }
+
+/* ── ITEMS ── */
+.item-chips { display: flex; gap: 7px; flex-wrap: wrap; }
+
+.chip {
+  background: var(--card);
+  border: 1px solid #ffffff18;
+  padding: 6px 11px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: var(--body);
+}
+.chip:hover { border-color: var(--yellow)88; }
+.chip.on { border-color: var(--yellow); background: #FFE66D18; color: var(--yellow); }
+
+.rand-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #FFE66D18, #FF6B9D18);
+  border: 2px dashed var(--yellow);
+  color: var(--yellow);
+  padding: 11px;
+  font-family: var(--dot);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 9px;
+  transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.rand-btn:hover { background: linear-gradient(135deg, #FFE66D28, #FF6B9D28); }
+
+/* ── INFO FIELDS ── */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-family: var(--dot); font-size: 8px; color: var(--mint); letter-spacing: 1px; }
+.field input, .field select {
+  background: var(--card);
+  border: 1px solid #ffffff18;
+  color: white;
+  padding: 8px 10px;
+  font-family: var(--body);
+  font-size: 12px;
+  outline: none;
+  transition: border 0.2s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus { border-color: var(--lav); }
+.field select option { background: var(--dark); }
+
+/* ── GENERATE BTN ── */
+.gen-section { padding: 16px 20px 30px; }
+
+.gen-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--pink), var(--lav));
+  border: none;
+  color: white;
+  padding: 17px;
+  font-family: var(--dot);
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.gen-btn::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+.gen-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px #FF6B9D44; }
+.gen-btn:active { transform: translateY(0); }
+
+.gen-sub { text-align: center; font-family: var(--dot); font-size: 9px; color: #ffffff28; margin-top: 8px; }
+
+/* ── LOADING SCREEN ── */
+#screen-loading {
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.loading-inner { text-align: center; padding: 40px 20px; }
+
+.pixel-spinner {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  animation: spinnerRotate 2s linear infinite;
+}
+@keyframes spinnerRotate { to { transform: rotate(360deg); } }
+
+.pixel-spinner .dot {
+  background: var(--pink);
+  animation: dotPulse 0.8s ease-in-out infinite;
+}
+.pixel-spinner .dot:nth-child(2) { background: var(--mint); animation-delay: 0.1s; }
+.pixel-spinner .dot:nth-child(3) { background: var(--lav); animation-delay: 0.2s; }
+.pixel-spinner .dot:nth-child(4) { background: var(--yellow); animation-delay: 0.3s; }
+.pixel-spinner .dot:nth-child(5) { background: var(--pink); animation-delay: 0.4s; }
+.pixel-spinner .dot:nth-child(6) { background: var(--mint); animation-delay: 0.5s; }
+.pixel-spinner .dot:nth-child(7) { background: var(--lav); animation-delay: 0.6s; }
+.pixel-spinner .dot:nth-child(8) { background: var(--yellow); animation-delay: 0.7s; }
+.pixel-spinner .dot:nth-child(9) { background: var(--pink); animation-delay: 0.8s; }
+@keyframes dotPulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.loading-title { font-family: var(--dot); font-size: 14px; color: var(--pink); letter-spacing: 2px; margin-bottom: 8px; }
+.loading-sub { font-family: var(--dot); font-size: 9px; color: #ffffff44; letter-spacing: 1px; }
+
+.progress-bar {
+  width: 200px;
+  height: 6px;
+  background: #ffffff0a;
+  margin: 20px auto 0;
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink), var(--lav));
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ── SHEET SCREEN ── */
+#screen-sheet {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sheet-wrap { padding: 16px 16px 100px; }
+
+.character-sheet {
+  background: var(--card);
+  border: 1.5px solid var(--pink);
+  padding: 16px;
+  position: relative;
+}
+
+.corner-dot {
+  position: absolute;
+  width: 8px; height: 8px;
+  background: var(--pink);
+}
+.corner-dot.tl { top:-1px; left:-1px; }
+.corner-dot.tr { top:-1px; right:-1px; }
+.corner-dot.bl { bottom:-1px; left:-1px; }
+.corner-dot.br { bottom:-1px; right:-1px; }
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sheet-name { font-family: var(--dot); font-size: 22px; color: var(--pink); letter-spacing: 2px; }
+.sheet-sub { font-family: var(--dot); font-size: 9px; color: var(--mint); margin-top: 3px; letter-spacing: 1px; }
+
+.sheet-badges { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+
+.sbadge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-family: var(--dot);
+  font-size: 8px;
+  border: 1px solid;
+  letter-spacing: 1px;
+}
+.sbadge-pink { border-color: var(--pink); color: var(--pink); }
+.sbadge-mint { border-color: var(--mint); color: var(--mint); }
+.sbadge-yellow { border-color: var(--yellow); color: var(--yellow); }
+
+/* views */
+.views-label { font-family: var(--dot); font-size: 8px; color: #ffffff28; letter-spacing: 2px; margin-bottom: 7px; }
+
+.views-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.view-box {
+  background: #ffffff05;
+  border: 1px solid var(--border);
+  aspect-ratio: 0.58;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 5px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.view-box:hover { border-color: var(--pink)55; }
+.view-box.active-view { border-color: var(--pink)88; }
+
+.view-char {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  image-rendering: pixelated;
+}
+
+/* the uploaded pixel image */
+.view-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: pixelated;
+  padding: 4px;
+}
+
+.view-lbl {
+  font-family: var(--dot);
+  font-size: 7px;
+  color: #ffffff33;
+  position: relative;
+  z-index: 1;
+  background: rgba(13,13,26,0.85);
+  padding: 1px 6px;
+}
+.view-box.active-view .view-lbl { color: var(--pink); }
+
+/* props */
+.props-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.prop-box {
+  background: #ffffff04;
+  border: 1px dashed var(--border);
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: border-color 0.2s;
+}
+.prop-box.filled { border-style: solid; border-color: var(--yellow)55; }
+.prop-box .picon { font-size: 18px; }
+.prop-box .pname { font-family: var(--dot); font-size: 7px; color: #ffffff33; }
+.prop-box.filled .pname { color: var(--yellow); }
+
+/* palette */
+.palette-row { display: flex; gap: 3px; align-items: center; margin-bottom: 14px; }
+.swatch { width: 16px; height: 16px; border: 1px solid #ffffff11; flex-shrink: 0; }
+.pal-label { font-family: var(--dot); font-size: 7px; color: #ffffff22; letter-spacing: 2px; margin-left: 4px; }
+
+/* stats sidebar */
+.sheet-body { display: grid; grid-template-columns: 1fr 140px; gap: 12px; }
+
+.stats-block {
+  background: #ffffff04;
+  border: 1px solid var(--border);
+  padding: 10px;
+}
+.stats-title { font-family: var(--dot); font-size: 8px; color: var(--mint); letter-spacing: 2px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+.stat-row { margin-bottom: 7px; }
+.stat-row:last-child { margin-bottom: 0; }
+.stat-head { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.stat-name { font-family: var(--dot); font-size: 7px; color: #ffffff33; letter-spacing: 1px; }
+.stat-val { font-family: var(--dot); font-size: 7px; color: var(--lav); }
+.stat-bar { height: 3px; background: #ffffff08; position: relative; }
+.stat-fill { position: absolute; left:0; top:0; height:100%; transition: width 1s ease; }
+
+.info-block {
+  background: #ffffff04;
+  border: 1px solid var(--border);
+  padding: 10px;
+}
+.info-title { font-family: var(--dot); font-size: 8px; color: var(--mint); letter-spacing: 2px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.info-row { display: flex; justify-content: space-between; margin-bottom: 5px; align-items: center; }
+.info-row:last-child { margin-bottom: 0; }
+.ikey { font-family: var(--dot); font-size: 7px; color: #ffffff28; }
+.ival { font-family: var(--dot); font-size: 7px; color: white; text-align: right; }
+
+.sheet-foot {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.foot-logo { font-family: var(--dot); font-size: 10px; color: var(--pink); }
+.foot-logo span { color: var(--mint); }
+.foot-id { font-family: var(--dot); font-size: 7px; color: #ffffff18; }
+
+/* ── ACTION BTNS ── */
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 420px;
+  background: rgba(13,13,26,0.95);
+  border-top: 1px solid var(--pink)44;
+  padding: 12px 16px 24px;
+  display: flex;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.act-btn {
+  flex: 1;
+  padding: 12px;
+  font-family: var(--dot);
+  font-size: 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border: 1.5px solid;
+  background: transparent;
+  transition: all 0.2s;
+  text-align: center;
+}
+.act-btn-primary { border-color: var(--pink); color: var(--pink); }
+.act-btn-primary:hover { background: var(--pink); color: var(--dark); }
+.act-btn-secondary { border-color: #ffffff22; color: #ffffff55; }
+.act-btn-secondary:hover { border-color: var(--mint); color: var(--mint); }
+
+/* ── BOTTOM TAB ── */
+.bottom-tab {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 420px;
+  background: rgba(13,13,26,0.95);
+  border-top: 1px solid var(--pink)33;
+  display: flex;
+  padding: 10px 0 20px;
+  backdrop-filter: blur(10px);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+.tab-item.active { opacity: 1; }
+.tab-icon { font-size: 18px; }
+.tab-lbl { font-family: var(--dot); font-size: 7px; color: white; }
+.tab-item.active .tab-lbl { color: var(--pink); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+@keyframes reveal { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.float { animation: float 2.5s ease-in-out infinite; }
+.blink { animation: blink 1s step-end infinite; }
+
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+.reveal { opacity: 0; animation: reveal 0.5s ease forwards; }
+.reveal-1 { animation-delay: 0.1s; }
+.reveal-2 { animation-delay: 0.2s; }
+.reveal-3 { animation-delay: 0.3s; }
+.reveal-4 { animation-delay: 0.4s; }
+.reveal-5 { animation-delay: 0.5s; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--dark); }
+::-webkit-scrollbar-thumb { background: var(--pink)44; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══ SCREEN 1: CREATE ═══ -->
+  <div class="screen active" id="screen-create">
+
+    <div class="header">
+      <div class="logo">DOT<span>ME</span>.io</div>
+      <div class="hbadge">BETA</div>
+    </div>
+
+    <div class="steps" id="steps-bar">
+      <div class="step done" id="step1">
+        <div class="step-num">✓</div>
+        <span class="step-label">PHOTO</span>
+      </div>
+      <div class="step-line done" id="line1"></div>
+      <div class="step active" id="step2">
+        <div class="step-num">2</div>
+        <span class="step-label">STYLE</span>
+      </div>
+      <div class="step-line" id="line2"></div>
+      <div class="step" id="step3">
+        <div class="step-num">3</div>
+        <span class="step-label">ITEMS</span>
+      </div>
+      <div class="step-line" id="line3"></div>
+      <div class="step" id="step4">
+        <div class="step-num">4</div>
+        <span class="step-label">INFO</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PHOTO -->
+    <div class="section">
+      <div class="stitle">PHOTO UPLOAD</div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*">
+        <img class="upload-preview" id="upload-preview" src="" alt="preview">
+        <span class="upload-icon float" id="upload-icon">📸</span>
+        <div class="upload-text" id="upload-text">Drop your photo here<span class="blink">_</span></div>
+        <div class="upload-sub">Front-facing photo recommended · JPG / PNG</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- STYLE -->
+    <div class="section">
+      <div class="stitle">CHARACTER STYLE</div>
+      <div class="style-grid">
+        <div class="style-card active" data-style="classic">
+          <div class="check-mark">✓</div>
+          <div class="style-preview">👾</div>
+          <span class="style-name">CLASSIC DOT</span>
+          <span class="style-desc">Y2K retro vibes</span>
+        </div>
+        <div class="style-card" data-style="kawaii">
+          <div class="check-mark">✓</div>
+          <div class="style-preview">🌸</div>
+          <span class="style-name">KAWAII DOT</span>
+          <span class="style-desc">Cute J-pop style</span>
+        </div>
+        <div class="style-card" data-style="rpg">
+          <div class="check-mark">✓</div>
+          <div class="style-preview">⚔️</div>
+          <span class="style-name">RPG DOT</span>
+          <span class="style-desc">Fantasy game hero</span>
+        </div>
+        <div class="style-card" data-style="dark">
+          <div class="check-mark">✓</div>
+          <div class="style-preview">🌙</div>
+          <span class="style-name">DARK DOT</span>
+          <span class="style-desc">Gothic & mysterious</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- POSE -->
+    <div class="section">
+      <div class="stitle">POSE SET</div>
+      <div class="pose-grid">
+        <div class="pose-card active" data-pose="standing">
+          <span class="pose-icon">🧍</span>
+          <span class="pose-label">STANDING</span>
+        </div>
+        <div class="pose-card" data-pose="sitting">
+          <span class="pose-icon">🪑</span>
+          <span class="pose-label">SITTING</span>
+        </div>
+        <div class="pose-card" data-pose="cheering">
+          <span class="pose-icon">🙌</span>
+          <span class="pose-label">CHEERING</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ITEMS -->
+    <div class="section">
+      <div class="stitle">ITEMS & PROPS</div>
+      <div class="item-chips">
+        <div class="chip" data-item="☕ Coffee">☕ Coffee</div>
+        <div class="chip" data-item="🎒 Bag">🎒 Bag</div>
+        <div class="chip on" data-item="📷 Camera">📷 Camera</div>
+        <div class="chip on" data-item="🍞 Bread">🍞 Bread</div>
+        <div class="chip" data-item="🎮 Gamepad">🎮 Gamepad</div>
+        <div class="chip" data-item="🎵 Earphones">🎵 Earphones</div>
+        <div class="chip" data-item="📚 Book">📚 Book</div>
+        <div class="chip" data-item="🌂 Umbrella">🌂 Umbrella</div>
+      </div>
+      <button class="rand-btn" id="rand-btn">🎲 AI Random Item Drop</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- INFO -->
+    <div class="section">
+      <div class="stitle">CHARACTER INFO</div>
+      <div class="info-grid">
+        <div class="field" style="grid-column:1/-1">
+          <label>CHARACTER NAME</label>
+          <input type="text" id="char-name" placeholder="Enter your name" value="Muguet">
+        </div>
+        <div class="field">
+          <label>CLASS / ROLE</label>
+          <select id="char-class">
+            <option>Caffeine Addict</option>
+            <option>Nap Master</option>
+            <option>Shopping Warrior</option>
+            <option selected>Night Owl Creator</option>
+            <option>Free Spirit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>MBTI</label>
+          <select id="char-mbti">
+            <option>ENFP</option>
+            <option>INFJ</option>
+            <option>INTJ</option>
+            <option>ENTP</option>
+            <option selected>ISFP</option>
+            <option>ESTJ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ZODIAC SIGN</label>
+          <select id="char-zodiac">
+            <option>♈ Aries</option>
+            <option>♉ Taurus</option>
+            <option>♊ Gemini</option>
+            <option>♋ Cancer</option>
+            <option>♌ Leo</option>
+            <option>♍ Virgo</option>
+            <option selected>♎ Libra</option>
+            <option>♏ Scorpio</option>
+            <option>♐ Sagittarius</option>
+            <option>♑ Capricorn</option>
+            <option>♒ Aquarius</option>
+            <option>♓ Pisces</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>BIRTH YEAR</label>
+          <input type="text" id="char-year" placeholder="e.g. 1998">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>ONE-LINE BIO</label>
+          <input type="text" id="char-bio" placeholder="e.g. Can't live without coffee ☕" value="A free spirit with an eye for beauty ✦">
+        </div>
+      </div>
+    </div>
+
+    <div class="gen-section">
+      <button class="gen-btn" id="gen-btn">✦ Generate Character Sheet ✦</button>
+      <div class="gen-sub">AI generation takes approx. 20–30 seconds</div>
+    </div>
+
+    <div style="height:70px;"></div>
+
+    <div class="bottom-tab">
+      <div class="tab-item active">
+        <span class="tab-icon">✨</span>
+        <span class="tab-lbl">CREATE</span>
+      </div>
+      <div class="tab-item">
+        <span class="tab-icon">📁</span>
+        <span class="tab-lbl">MY SHEETS</span>
+      </div>
+      <div class="tab-item">
+        <span class="tab-icon">🌐</span>
+        <span class="tab-lbl">GALLERY</span>
+      </div>
+      <div class="tab-item">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-lbl">SETTINGS</span>
+      </div>
+    </div>
+
+  </div><!-- end screen-create -->
+
+  <!-- ═══ SCREEN 2: LOADING ═══ -->
+  <div class="screen" id="screen-loading">
+    <div class="loading-inner">
+      <div class="pixel-spinner">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <div class="loading-title" id="loading-msg">GENERATING<span class="blink">_</span></div>
+      <div class="loading-sub" id="loading-sub">Analyzing your photo...</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN 3: SHEET ═══ -->
+  <div class="screen" id="screen-sheet">
+    <div class="header">
+      <div class="logo">DOT<span>ME</span>.io</div>
+      <div class="hbadge">SHEET</div>
+    </div>
+
+    <div class="sheet-wrap">
+      <div class="character-sheet fade-in" id="char-sheet">
+        <div class="corner-dot tl"></div>
+        <div class="corner-dot tr"></div>
+        <div class="corner-dot bl"></div>
+        <div class="corner-dot br"></div>
+
+        <!-- SHEET HEADER -->
+        <div class="sheet-header reveal reveal-1">
+          <div>
+            <div class="sheet-name" id="sheet-name">MUGUET</div>
+            <div class="sheet-sub">▶ PIXEL CHARACTER SHEET · v1.0</div>
+          </div>
+          <div class="sheet-badges">
+            <span class="sbadge sbadge-pink" id="sheet-mbti">ISFP</span>
+            <span class="sbadge sbadge-mint" id="sheet-zodiac">♎ LIBRA</span>
+            <span class="sbadge sbadge-yellow">Lv. 01</span>
+          </div>
+        </div>
+
+        <!-- VIEWS -->
+        <div class="reveal reveal-2">
+          <div class="views-label">▶ CHARACTER VIEWS</div>
+          <div class="views-grid">
+            <div class="view-box active-view" onclick="selectView(this)">
+              <div class="view-char" id="view-front">🧍‍♀️</div>
+              <span class="view-lbl">FRONT</span>
+            </div>
+            <div class="view-box" onclick="selectView(this)">
+              <div class="view-char" id="view-side" style="transform:scaleX(-0.75) translateX(16%); opacity:0.85;">🧍‍♀️</div>
+              <span class="view-lbl">SIDE</span>
+            </div>
+            <div class="view-box" onclick="selectView(this)">
+              <div class="view-char" id="view-back" style="filter:brightness(0.65); opacity:0.75;">🧍‍♀️</div>
+              <span class="view-lbl">BACK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROPS + STATS -->
+        <div class="sheet-body reveal reveal-3">
+          <div>
+            <div class="views-label" style="margin-bottom:7px;">▶ ITEMS</div>
+            <div class="props-grid" id="sheet-props">
+              <div class="prop-box filled"><span class="picon">📷</span><span class="pname">CAMERA</span></div>
+              <div class="prop-box filled"><span class="picon">🍞</span><span class="pname">BREAD</span></div>
+              <div class="prop-box"><span class="picon" style="opacity:0.2;font-size:12px;">+</span><span class="pname">EMPTY</span></div>
+              <div class="prop-box"><span class="picon" style="opacity:0.2;font-size:12px;">+</span><span class="pname">EMPTY</span></div>
+            </div>
+
+            <div class="views-label" style="margin:12px 0 7px;">▶ COLOR PALETTE</div>
+            <div class="palette-row" id="sheet-palette">
+              <div class="swatch" style="background:#8B5E3C;"></div>
+              <div class="swatch" style="background:#C4845A;"></div>
+              <div class="swatch" style="background:#E8A882;"></div>
+              <div class="swatch" style="background:#CC2222;"></div>
+              <div class="swatch" style="background:#2B3A6B;"></div>
+              <div class="swatch" style="background:#F5F5F5;"></div>
+              <div class="swatch" style="background:#1A1A1A;"></div>
+              <div class="swatch" style="background:#FFD700;"></div>
+              <span class="pal-label">AUTO EXTRACTED</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="stats-block">
+              <div class="stats-title">STATS</div>
+              <div class="stat-row">
+                <div class="stat-head"><span class="stat-name">VIBE</span><span class="stat-val">88</span></div>
+                <div class="stat-bar"><div class="stat-fill" style="width:88%;background:var(--pink);"></div></div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-head"><span class="stat-name">STYLE</span><span class="stat-val">95</span></div>
+                <div class="stat-bar"><div class="stat-fill" style="width:95%;background:var(--mint);"></div></div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-head"><span class="stat-name">CHARM</span><span class="stat-val">82</span></div>
+                <div class="stat-bar"><div class="stat-fill" style="width:82%;background:var(--yellow);"></div></div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-head"><span class="stat-name">RARE</span><span class="stat-val">76</span></div>
+                <div class="stat-bar"><div class="stat-fill" style="width:76%;background:var(--lav);"></div></div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-head"><span class="stat-name">POWER</span><span class="stat-val">70</span></div>
+                <div class="stat-bar"><div class="stat-fill" style="width:70%;background:#FF9F6B;"></div></div>
+              </div>
+            </div>
+
+            <div class="info-block">
+              <div class="info-title">PROFILE</div>
+              <div class="info-row"><span class="ikey">CLASS</span><span class="ival" id="sheet-class">CREATOR</span></div>
+              <div class="info-row"><span class="ikey">STYLE</span><span class="ival">CLASSIC DOT</span></div>
+              <div class="info-row"><span class="ikey">ID</span><span class="ival">MGT·001</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BIO -->
+        <div class="reveal reveal-4" style="margin-top:12px; background:#ffffff04; border:1px solid var(--border); padding:10px;">
+          <div class="info-title" style="font-family:var(--dot);font-size:8px;color:var(--mint);letter-spacing:2px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);">BIO</div>
+          <div style="font-family:var(--dot);font-size:8px;color:#ffffff55;line-height:2;letter-spacing:1px;" id="sheet-bio">
+            A free spirit with an eye for beauty ✦
+          </div>
+        </div>
+
+        <!-- SHEET FOOTER -->
+        <div class="sheet-foot reveal reveal-5">
+          <div class="foot-logo">DOT<span>ME</span>.io</div>
+          <div class="foot-id">CHAR · MGT · 001 · 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTION BAR -->
+    <div class="action-bar">
+      <button class="act-btn act-btn-secondary" onclick="goBack()">← REDO</button>
+      <button class="act-btn act-btn-primary" onclick="shareSheet()">↑ SHARE</button>
+      <button class="act-btn act-btn-primary" onclick="downloadSheet()">↓ SAVE</button>
+    </div>
+
+  </div><!-- end screen-sheet -->
+
+</div><!-- end app -->
+
+<script>
+const screens = {
+  create: document.getElementById('screen-create'),
+  loading: document.getElementById('screen-loading'),
+  sheet: document.getElementById('screen-sheet')
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// upload
+const fileInput = document.getElementById('file-input');
+const uploadPreview = document.getElementById('upload-preview');
+const uploadIcon = document.getElementById('upload-icon');
+const uploadText = document.getElementById('upload-text');
+
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = ev.target.result;
+    uploadPreview.src = dataUrl;
+    uploadPreview.classList.add('visible');
+    uploadIcon.style.display = 'none';
+    uploadText.innerHTML = '✓ Photo uploaded<span class="blink">_</span>';
+
+    // set in sheet views using base64
+    document.getElementById('view-front').innerHTML = `<img src="${dataUrl}" class="view-img" alt="front">`;
+    document.getElementById('view-side').innerHTML = `<img src="${dataUrl}" class="view-img" style="transform:scaleX(-1);opacity:0.85;" alt="side">`;
+    document.getElementById('view-back').innerHTML = `<img src="${dataUrl}" class="view-img" style="filter:brightness(0.6);opacity:0.75;" alt="back">`;
+  };
+  reader.readAsDataURL(file);
+});
+
+// drag
+const uz = document.getElementById('upload-zone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('dragging'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('dragging'));
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.classList.remove('dragging');
+  const file = e.dataTransfer.files[0];
+  if (file) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); }
+});
+
+// style cards
+document.querySelectorAll('.style-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.style-card').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+});
+
+// pose cards
+document.querySelectorAll('.pose-card').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.pose-card').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+});
+
+// item chips
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('on'));
+});
+
+// random items
+const randItems = ['🍰 Cake','🎸 Guitar','🌺 Flower','🎩 Hat','🦋 Butterfly','⭐ Star','🍓 Strawberry','🎈 Balloon','🎀 Ribbon','🌙 Moon'];
+const randBtn = document.getElementById('rand-btn');
+randBtn.addEventListener('click', function() {
+  this.textContent = '🎲 Rolling...';
+  setTimeout(() => {
+    const picked = randItems[Math.floor(Math.random() * randItems.length)];
+    this.textContent = `✨ Got ${picked}!`;
+
+    // add chip
+    const chip = document.createElement('div');
+    chip.className = 'chip on';
+    chip.textContent = picked;
+    chip.addEventListener('click', () => chip.classList.toggle('on'));
+    document.querySelector('.item-chips').appendChild(chip);
+
+    setTimeout(() => { this.textContent = '🎲 AI Random Item Drop'; }, 2000);
+  }, 900);
+});
+
+// generate
+document.getElementById('gen-btn').addEventListener('click', startGenerate);
+
+function startGenerate() {
+  // update sheet with form values
+  const name = document.getElementById('char-name').value || 'DOT GIRL';
+  const mbti = document.getElementById('char-mbti').value;
+  const zodiac = document.getElementById('char-zodiac').value;
+  const bio = document.getElementById('char-bio').value;
+  const cls = document.getElementById('char-class').value;
+
+  document.getElementById('sheet-name').textContent = name.toUpperCase();
+  document.getElementById('sheet-mbti').textContent = mbti;
+  document.getElementById('sheet-zodiac').textContent = zodiac;
+  document.getElementById('sheet-bio').textContent = bio;
+  document.getElementById('sheet-class').textContent = cls.toUpperCase().slice(0,10);
+
+  // update props
+  const selectedItems = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.item || c.textContent);
+  const propsGrid = document.getElementById('sheet-props');
+  propsGrid.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const item = selectedItems[i];
+    const box = document.createElement('div');
+    if (item) {
+      const parts = item.split(' ');
+      const icon = parts[0];
+      const lbl = parts.slice(1).join(' ').toUpperCase().slice(0,7);
+      box.className = 'prop-box filled';
+      box.innerHTML = `<span class="picon">${icon}</span><span class="pname">${lbl}</span>`;
+    } else {
+      box.className = 'prop-box';
+      box.innerHTML = `<span class="picon" style="opacity:0.2;font-size:12px;">+</span><span class="pname">EMPTY</span>`;
+    }
+    propsGrid.appendChild(box);
+  }
+
+  showScreen('loading');
+  animateLoading();
+}
+
+function animateLoading() {
+  const msgs = [
+    ['ANALYZING_', 'Detecting face & skin tone...'],
+    ['STYLING__', 'Applying pixel art style...'],
+    ['RENDERING_', 'Generating character views...'],
+    ['FINISHING_', 'Composing your sheet...'],
+  ];
+  const fill = document.getElementById('progress-fill');
+  const msg = document.getElementById('loading-msg');
+  const sub = document.getElementById('loading-sub');
+
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < msgs.length) {
+      msg.innerHTML = msgs[i][0] + '<span class="blink">_</span>';
+      sub.textContent = msgs[i][1];
+      fill.style.width = ((i + 1) / msgs.length * 100) + '%';
+      i++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => showScreen('sheet'), 400);
+    }
+  }, 700);
+}
+
+// view select
+function selectView(el) {
+  document.querySelectorAll('.view-box').forEach(v => v.classList.remove('active-view'));
+  el.classList.add('active-view');
+}
+
+function goBack() { showScreen('create'); }
+
+function shareSheet() {
+  if (navigator.share) {
+    navigator.share({ title: 'My DOT ME Character Sheet', text: 'Check out my pixel character sheet!' });
+  } else {
+    alert('Share link copied! ✦');
+  }
+}
+
+function downloadSheet() {
+  alert('Saving your sheet as PNG... ✦\n(Full export in production)');
+}
+</script>
+</body>
+</html>
