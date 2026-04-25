@@ -1038,6 +1038,7 @@ fileInput.addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = function(ev) {
     const dataUrl = ev.target.result;
+    uploadedDataUrl = dataUrl;
     uploadPreview.src = dataUrl;
     uploadPreview.classList.add('visible');
     uploadIcon.style.display = 'none';
@@ -1105,8 +1106,9 @@ randBtn.addEventListener('click', function() {
 // generate
 document.getElementById('gen-btn').addEventListener('click', startGenerate);
 
-function startGenerate() {
-  // update sheet with form values
+let uploadedDataUrl = null;
+
+async function startGenerate() {
   const name = document.getElementById('char-name').value || 'DOT GIRL';
   const mbti = document.getElementById('char-mbti').value;
   const zodiac = document.getElementById('char-zodiac').value;
@@ -1119,7 +1121,6 @@ function startGenerate() {
   document.getElementById('sheet-bio').textContent = bio;
   document.getElementById('sheet-class').textContent = cls.toUpperCase().slice(0,10);
 
-  // update props
   const selectedItems = [...document.querySelectorAll('.chip.on')].map(c => c.dataset.item || c.textContent);
   const propsGrid = document.getElementById('sheet-props');
   propsGrid.innerHTML = '';
@@ -1140,10 +1141,38 @@ function startGenerate() {
   }
 
   showScreen('loading');
-  animateLoading();
+  animateLoadingText();
+
+  // 사진이 없으면 그냥 시트로
+  if (!uploadedDataUrl) {
+    setTimeout(() => showScreen('sheet'), 3000);
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/transform', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: uploadedDataUrl })
+    });
+
+    const data = await response.json();
+
+    if (data.result) {
+      const pixelUrl = Array.isArray(data.result) ? data.result[0] : data.result;
+      // 변환된 픽셀아트 이미지를 3면도에 적용
+      document.getElementById('view-front').innerHTML = `<img src="${pixelUrl}" class="view-img" alt="front">`;
+      document.getElementById('view-side').innerHTML = `<img src="${pixelUrl}" class="view-img" style="transform:scaleX(-1);opacity:0.85;" alt="side">`;
+      document.getElementById('view-back').innerHTML = `<img src="${pixelUrl}" class="view-img" style="filter:brightness(0.6);opacity:0.75;" alt="back">`;
+    }
+  } catch (err) {
+    console.error('API error:', err);
+  }
+
+  showScreen('sheet');
 }
 
-function animateLoading() {
+function animateLoadingText() {
   const msgs = [
     ['ANALYZING_', 'Detecting face & skin tone...'],
     ['STYLING__', 'Applying pixel art style...'],
@@ -1163,7 +1192,6 @@ function animateLoading() {
       i++;
     } else {
       clearInterval(interval);
-      setTimeout(() => showScreen('sheet'), 400);
     }
   }, 700);
 }
