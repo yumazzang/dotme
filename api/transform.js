@@ -12,16 +12,14 @@ module.exports = async function handler(req, res) {
     const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
     const output = await replicate.run(
-      "retro-diffusion/rd-plus",
+      "cjwbw/pixel-art-style:c5b9f96bfba4a673cf04cbab2e98e59a12e82dd8dc27e6b09bb6426b95e1d8c1",
       {
         input: {
           image: image,
-          prompt: "pixel art character, full body, 16bit style, white background",
-          style: "character",
-          width: 256,
-          height: 256,
+          prompt: "pixel art, 16bit style, game character sprite, full body, white background",
+          negative_prompt: "blurry, low quality, 3d render, photorealistic",
+          num_inference_steps: 20,
           strength: 0.75,
-          num_images: 1,
         }
       }
     );
